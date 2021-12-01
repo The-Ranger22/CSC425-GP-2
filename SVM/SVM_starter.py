@@ -7,18 +7,10 @@ import matplotlib.pyplot as plt
 Author: Levi Schanding
 
 
-    [Notes]
-    - Had to fiddle with the data slightly, copied and pasted the first row of the csv to the end of the file
-
 '''
 
 
-def plot_histogram(title, values):
-    plt.hist(values, len(values))
-    plt.title(title)
-    plt.show()
-
-
+# Prepares the dataset for use
 def prepare_raw():
     raw = pd.read_csv('dataset/mnist_subset.csv')
     new_headers = [f'l{x}' for x in range(len(raw.columns))]
@@ -45,13 +37,11 @@ def prepare_raw():
     return raw, numbers
 
 
-# splits the raw dataset into a training set and testing set based on a given ratio. Ensures that the ratio is upheld
-# for all labels
+# A custom train_test_split method that ensures that the given ratio is upheld for all subsets of
+# the label of interest.
 def split_train_test(ratio, raw, numbers):
     if not isinstance(raw, pd.DataFrame):
         raise TypeError
-
-
 
     training_indices = []
     testing_indices = []
@@ -73,6 +63,8 @@ def split_train_test(ratio, raw, numbers):
     return training_frame, testing_frame
 
 
+# Compares the values of the given predictions against the values of the given expecteds, returns the number of
+# correct predictions divided by the total number of predictions.
 def accuracy(predictions, expected):
     if not isinstance(expected, pd.Series):
         raise TypeError
@@ -87,12 +79,21 @@ def accuracy(predictions, expected):
     return correct/total
 
 
-def testing_suite(ratios, raw, raw_ordered_indices, kernels):
+def testing_suite(ratios, raw, raw_ordered_indices, kernels, colors):
     kernel_accuracies = {}
+    fig, ax = plt.subplots()
+    if not isinstance(ax, plt.Axes):
+        raise TypeError
+    ax.set_title('SVC Kernel Accuracy')
+    ax.set_xlabel('Ratio')
+    ax.set_ylabel('Accuracy')
+
     for kernel in kernels:
         i = 1
         accuracies = {}
         values = []
+
+
         for ratio in ratios:
             print(f"[Kernel: {kernel}] : Test {i} commencing: {ratio*100}% Training, {round(100 - ratio*100)}% Testing")
             train, test = split_train_test(ratio, raw, raw_ordered_indices)
@@ -108,11 +109,16 @@ def testing_suite(ratios, raw, raw_ordered_indices, kernels):
             accu = accuracy(predictions, test_Y)
             accuracies[ratio] = accu
             print(f"[Kernel: {kernel}] : Test {i} ended: accuracy = {round(accu*100, 2)}%")
-            values.append([accu, ratio])
+            values.append(accu)
 
             i += 1
-        plot_histogram(kernel, values)
+
+        ax.scatter(ratios, values, c=colors.pop(0), label=kernel)
         kernel_accuracies[kernel] = accuracies
+
+    ax.legend()
+    ax.grid(True)
+    plt.show()
 
 
 
@@ -128,8 +134,15 @@ def main():
         'rbf',
         'sigmoid'
     ]
-    ratio_accuracies = testing_suite(ratios, raw, raw_ordered_indices, kernels)
 
+    colors = [
+        'red',
+        'blue',
+        'green',
+        'purple'
+    ]
+
+    ratio_accuracies = testing_suite(ratios, raw, raw_ordered_indices, kernels, colors)
 
     for kernel in kernels:
         for ratio in ratios:
