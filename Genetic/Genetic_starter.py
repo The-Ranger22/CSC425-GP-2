@@ -9,6 +9,7 @@ Fall 2021
 
 
 import sys
+# used for exit()
 
 # parents array
 codes = []
