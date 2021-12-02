@@ -1,6 +1,7 @@
+import copy
 import random
-from random import choice
 from string import ascii_letters, punctuation, digits
+from operator import itemgetter
 
 GENERATIONS = 100
 
@@ -8,6 +9,7 @@ GOAL = "Machine Learning is fun!"
 
 CHROMOSOMES = []
 MATCH = False
+RESULT = []
 
 
 # Step 1: generate alleles randomly
@@ -36,33 +38,51 @@ def fitness_test(chromosome):
     return fitness
 
 
-def reproduction(chromosome, fitness):
+def reproduction(gene_pool):
     rank = 0
+    next_generation = []
+    splitPairs = []
 
-    fitness_probability = fitness / (len(GOAL))
-    print(fitness_probability)
-    if fitness_probability == 1: MATCH = True
-    # elif fitness_probability <= 0.25:
+    for genes in gene_pool:
+        fitness_probability = genes["fitness"] / (len(GOAL))
+        # print(fitness_probability)
+        if fitness_probability == 1:
+            MATCH = True
+            RESULT.append(genes)
+            break
+        elif fitness_probability >= 0.90:
+            next_generation.append(genes)
+        else:
+            splitPairs.append(genes)
+
+
+    for _ in range (len(splitPairs)):
+        gamete1 = random.choice(splitPairs[:50])
+        gamete2 = random.choice(splitPairs[:50])
+        diploid = recombination(gamete1, gamete2)
+
+
+def recombination(gamete1, gamete2):
+    #TODO perform crossover and mutation based on random
+    pass
+
+
 
 
 if __name__ == '__main__':
     epoch = 1
     print(f"{GOAL:>42}")
-    parent = []
+    parent = {}
     for _ in range(GENERATIONS):
         chromosome = genetic_code()
         fitness = fitness_test(chromosome)
-        parent = {
-            "chromosome": chromosome,
-            "fitness": fitness
-        }
-        # print(type(parent))
-        CHROMOSOMES.extend(parent)
+        parent['chromosome'] = chromosome
+        parent['fitness'] = fitness
+        CHROMOSOMES.append(copy.deepcopy(parent))
 
-        # print(f"epoch {epoch:3}\t[chromosome:{chromosome}\tfitness:{fitness_test(chromosome)}]")
-        # epoch += 1
+    while not MATCH:
+        gene_pool = sorted(CHROMOSOMES, key=itemgetter('fitness'))
+        reproduction(gene_pool)
 
-    # print(type(CHROMOSOMES))
 
-    print(sorted(CHROMOSOMES, key=lambda parent: parent[1]))
 
